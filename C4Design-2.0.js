@@ -10,10 +10,8 @@
 	$.fn.C4Design = C4Design;
 
 	C4Design.Filed = function(field) {
-		var filed = {};
-		console.log(field);
 
-		filed.value = function(option) {
+		filedItem.value = function(option) {
 			if (option) {
 				return setValue(field, option);
 			} else {
@@ -21,24 +19,53 @@
 			}
 		};
 
-		filed.validation = function(option) {
+		filedItem.validation = function(option) {
 			return setValidation(field, null, option);
 		};
 
-		filed.empty = function() {
+		filedItem.empty = function() {
 			return setEmpty(field);
 		}
 
-		filed.type = function() {
+		filedItem.type = function() {
 			return getControlType(field);
 		}
 
-		return filed
-			//return getElement(field);
-	};
+		filedItem.attributes = function(attributesKey,attributesValue) {
+			if(attributesValue!=undefined){
+				$(getElement(field)).attr(attributesKey,attributesValue);
+			}else{
+				return $(getElement(field)).attr(attributesKey);
+			}
+			
+		}
 
-	C4Design.Filed.getValue = function(field) {
-		return getValue(field);
+		filedItem.class = function(className) {
+			if(className!=undefined&& className!=""){
+				$(getElement(field)).addClass(className);
+			}
+		}
+
+		filedItem.inputRegular = function(reg) {
+			if(reg!=undefined&& reg!=""){
+				$(getElement(field)).attr("regular",reg);
+			}
+		}
+
+		filedItem.invalidMessage = function(msg) {
+			if(msg!=undefined&& msg!=""){
+				$(getElement(field)).attr("invalid-msg",msg);
+			}
+		}
+
+		filedItem.displayValueInTitle = function() {
+			var itemValue= getValue(field);
+			if(itemValue!=undefined&& itemValue!=""){
+				$("title").html(itemValue+"_"+$("title").html());
+			}
+		}
+
+		return filedItem
 	};
 
 	C4Design.Section = function(field) {
@@ -49,9 +76,12 @@
 		console.log("C4Design");
 	};
 
-	C4Design.Document = function(field) {
-		var document = {};
+	C4Design.Document = function() {
 		document.status = getState();
+
+		document.setShowHideMultipl = function(option) {
+			setShowHideMultipl(option);
+		}
 
 		return document;
 	};
@@ -76,38 +106,6 @@
 		})
 
 	}
-
-	// if isRequired is undefined 恢复默认 Validation.
-	function setValidation(itemValue, finder, isRequired) {
-		if (PageMode == "edit" || PageMode == "add") {
-			if (isRequired == undefined) {
-				$(getSection(itemValue, finder)).find("[req]:not([requirexd='required'])").attr("required", "required").addClass("validatebox-invalid");
-			} else if (isRequired) {
-				if ($(getSection(itemValue, finder)).find("[name][requirexd='required']").length < 1) {
-					$(getSection(itemValue, finder)).find("[name]:not([requirexd='required'])").attr("required", "required").addClass("validatebox-invalid");
-				}
-
-			} else {
-				$(getSection(itemValue, finder)).find("[required]").removeAttr("required").removeClass("validatebox-invalid").attr("req", "required");
-			}
-		} else
-			return undefined;
-	}
-
-	function getState(itemValue) {
-		var status;
-		if (itemValue == undefined || itemValue == "") {
-			status = getValue(itemValue);
-		} else {
-			status = getValue("C4-WorkflowStateDisplayName");
-		}
-		if (PageMode == "add" && (status == undefined || status == "")) {
-			return "new";
-		} else {
-			return status;
-		}
-	}
-
 
 	function setShowHide(itemValue, showSection, innerItem, isChange) {
 
@@ -182,6 +180,36 @@
 
 	}
 
+	// if isRequired is undefined 恢复默认 Validation.
+	function setValidation(itemValue, finder, isRequired) {
+		if (PageMode == "edit" || PageMode == "add") {
+			if (isRequired == undefined) {
+				$(getSection(itemValue, finder)).find("[req]:not([requirexd='required'])").attr("required", "required").addClass("validatebox-invalid");
+			} else if (isRequired) {
+				if ($(getSection(itemValue, finder)).find("[name][requirexd='required']").length < 1) {
+					$(getSection(itemValue, finder)).find("[name]:not([requirexd='required'])").attr("required", "required").addClass("validatebox-invalid");
+				}
+
+			} else {
+				$(getSection(itemValue, finder)).find("[required]").removeAttr("required").removeClass("validatebox-invalid").attr("req", "required");
+			}
+		} else
+			return undefined;
+	}
+
+	function getState(itemValue) {
+		var status;
+		if (itemValue == undefined || itemValue == "") {
+			status = getValue(itemValue);
+		} else {
+			status = getValue("C4-WorkflowStateDisplayName");
+		}
+		if (PageMode == "add" && (status == undefined || status == "")) {
+			return "new";
+		} else {
+			return status;
+		}
+	}
 
 	function setEmpty(valueName, finder) {
 		if (PageMode == "edit" || PageMode == "add") {
@@ -353,7 +381,83 @@
 	}
 
 	function setValue(valueName, value) {
-		console.log("setValue " + valueName + ":" + value);
+		if (valueName == undefined) {
+			return "";
+		}
+		switch (PageMode) {
+			case "preview":
+				var valueItem = $("[name='DIV_" + valueName + "'] div div");
+
+				if (valueItem.length == 1) {
+					if ($(valueItem).find("label").length > 0) {
+						return $(valueItem).find("label").eq(0).html(value);
+					} else {
+						return $(valueItem).eq(0).html(value);
+					}
+				} else {
+					return "";
+				}
+
+			case "edit":
+			case "add":
+				setEmptyFiled(valueName);
+
+				switch (getControlType(valueName)) {
+
+					case "radio":
+						$(getElement(valueName)).find("[value='" + value + "']").attr("checked", "checked");
+						return;
+					case "checkbox":
+						if (typeof(value) == "string") {
+							$(getElement(valueName)).find("[value='" + value + "']").attr("checked", "checked");
+						} else if (typeof(value) == "object") {
+							$(value).each(function(item, i) {
+								$(getElement(valueName)).find("[value='" + item + "']").attr("checked", "checked");
+							})
+						} else {
+							return;
+						}
+						return;
+
+					case "text":
+					case "hidden":
+					case "textarea":
+						return $(getElement(valueName)).val(value);
+
+					case "PeoplePicker":
+						if (_array) {
+							if (typeof(value) == "string") {
+								_array[0].item.setValue("value");
+
+							} else if (typeof(value) == "object") {
+								_array.forEach(fucntion(arrayItem, arrayI) {
+									if (arrayItem.key == valueName) {
+										value.forEach(function(item, i) {
+											arrayItem.item.setValue(item);
+										})
+									}
+								})
+
+							} else {
+								return;
+							}
+						}
+						return;
+					case "Richtext":
+						return CKEDITOR.instances["Metadata-" + valueName].setData(value);
+					case "SingleSelect":
+					case "MultiSelect":
+
+						return $(getElement(valueName)).selectpicker('val', value);
+
+					default:
+						//lable
+						return undefined;
+				}
+
+			default:
+				return "";
+		}
 	}
 
 	function getValue(valueName) {
@@ -362,12 +466,17 @@
 		}
 		switch (PageMode) {
 			case "preview":
-				if ($("[name='DIV_" + valueName + "'] div").length <= 1) {
-					return $("[name='DIV_" + valueName + "'] div").eq(0).html().trim();
-				} else {
-					return $("[name='DIV_" + valueName + "'] div").eq(1).html().trim();
-				}
+				var valueItem = $("[name='DIV_" + valueName + "'] div div");
 
+				if (valueItem.length == 1) {
+					if ($(valueItem).find("label").length > 0) {
+						return $(valueItem).find("label").eq(0).html().trim();
+					} else {
+						return $(valueItem).eq(0).html().trim();
+					}
+				} else {
+					return "";
+				}
 			case "edit":
 			case "add":
 
