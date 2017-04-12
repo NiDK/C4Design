@@ -4,6 +4,8 @@
  * Author: dakun.ni@cn.pwc.com 
  *
  * Date: 2017-04-06
+ *
+ * Version: V2.0.170412
  */
 (function($) {
 	var C4Design = {};
@@ -40,7 +42,7 @@
 
 		}
 
-		filedItem.class = function(className) {
+		filedItem.addClass = function(className) {
 			if (className != undefined && className != "") {
 				$(getElement(field)).addClass(className);
 			}
