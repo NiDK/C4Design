@@ -10,7 +10,7 @@
 	$.fn.C4Design = C4Design;
 
 	C4Design.Filed = function(field) {
-
+		var filedItem = {};
 		filedItem.value = function(option) {
 			if (option) {
 				return setValue(field, option);
@@ -31,52 +31,100 @@
 			return getControlType(field);
 		}
 
-		filedItem.attributes = function(attributesKey,attributesValue) {
-			if(attributesValue!=undefined){
-				$(getElement(field)).attr(attributesKey,attributesValue);
-			}else{
+		filedItem.attributes = function(attributesKey, attributesValue) {
+			if (attributesValue != undefined) {
+				$(getElement(field)).attr(attributesKey, attributesValue);
+			} else {
 				return $(getElement(field)).attr(attributesKey);
 			}
-			
+
 		}
 
 		filedItem.class = function(className) {
-			if(className!=undefined&& className!=""){
+			if (className != undefined && className != "") {
 				$(getElement(field)).addClass(className);
 			}
 		}
 
 		filedItem.inputRegular = function(reg) {
-			if(reg!=undefined&& reg!=""){
-				$(getElement(field)).attr("regular",reg);
+			if (reg != undefined && reg != "") {
+				$(getElement(field)).attr("regular", reg);
 			}
 		}
 
 		filedItem.invalidMessage = function(msg) {
-			if(msg!=undefined&& msg!=""){
-				$(getElement(field)).attr("invalid-msg",msg);
+			if (msg != undefined && msg != "") {
+				$(getElement(field)).attr("invalid-msg", msg);
 			}
 		}
 
 		filedItem.displayValueInTitle = function() {
-			var itemValue= getValue(field);
-			if(itemValue!=undefined&& itemValue!=""){
-				$("title").html(itemValue+"_"+$("title").html());
+			var itemValue = getValue(field);
+			if (itemValue != undefined && itemValue != "") {
+				$("title").html(itemValue + "_" + $("title").html());
 			}
+		}
+
+		filedItem.show = function() {
+			$(getSection(field)).show();
+		}
+
+		filedItem.hide = function() {
+			$(getSection(field)).hide();
+		}
+
+		// showHideItems 要显示或隐藏的file集合,["fileName1","fileName2"];
+		filedItem.changeToShowHide = function(ifValue, showHideItems) {
+
+			var showSections = [];
+			if (showHideItems != undefined) {
+				if (typeof(showHideItems) === "string") {
+
+					showSections.push(getShowSectionItem(ifValue, showHideItems, ""));
+				} else {
+					showHideItems.forEach(function(item, i) {
+						showSections.push(getShowSectionItem(ifValue, item, ""));
+					})
+				}
+
+			};
+
+			setShowHideMultipl([{
+				item: field,
+				showSection: showSections
+			}]);
 		}
 
 		return filedItem
 	};
 
 	C4Design.Section = function(field) {
-		console.log("C4Design");
+		var sectionItem = {};
+		sectionItem.show = function() {
+			$(getSection(field)).show();
+		}
+
+		sectionItem.hide = function() {
+			$(getSection(field)).hide();
+		}
+		return sectionItem;
 	};
 
 	C4Design.Html = function(field) {
-		console.log("C4Design");
+		var htmlItem = {};
+		htmlItem.show = function() {
+			$(getSection(field)).show();
+		}
+
+		htmlItem.hide = function() {
+			$(getSection(field)).hide();
+		}
+		return htmlItem;
 	};
 
 	C4Design.Document = function() {
+		var document = {};
+
 		document.status = getState();
 
 		document.setShowHideMultipl = function(option) {
@@ -86,31 +134,71 @@
 		return document;
 	};
 
+	// {Roles:"",StaffId:"",StaffName:""}
+	C4Design.User = function(callback) {
+		GetUser(callBack());
+	};
 
+	// [{
+	//	item:"",
+	//	showSection: [{ifValue: ["",""],field:"",finder:""}, {}],
+	//  innerItem:[{ifValue:["",""],item:"",finder:"",innerItem:[{}]}]
+	// }]
 	function setShowHideMultipl(option) {
 		$(option).each(function(i, items) {
 			setShowHide(getValue(items.item), items.showSection, items.innerItem, false);
 
 			if (PageMode != "preview") {
 				getElement(items.item).change(function() {
-					setShowHide($(this).val(), items.showSection, items.innerItem, true);
+					setShowHide(getValue($(this).attr("name")), items.showSection, items.innerItem, true);
 				});
 			}
 
-			if (items.hasOwnProperty("innerItem"))
+			if (items.hasOwnProperty("innerItem")) {
 				$(items.innerItem).each(function(inx, innerItem) {
 					if (innerItem.hasOwnProperty("item")) {
 						setShowHideMultipl(innerItem);
 					}
 				})
+			}
 		})
 
 	}
 
+	function getShowSectionItem(ifValue, field, finder) {
+		var showSectionItem = {};
+		showSectionItem.ifValue = ifValue;
+		showSectionItem.field = field;
+		showSectionItem.finder = finder;
+		return showSectionItem;
+	}
+
+	function matchingItemValue(itemValue, ifValue) {
+		if (typeof(ifValue) === "string") {
+			if (itemValue == ifValue || itemValue.indexOf(ifValue) >= 0) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			var returnValue = false;
+			ifValue.forEach(function(item, i) {
+				if (itemValue == item || itemValue.indexOf(item) >= 0) {
+					returnValue = true;
+				}
+			});
+			return returnValue;
+		}
+	}
+
+	// itemValue:目标Filed 选中的值;
+	// showSection:显示或隐藏的filed;
+	// innerItem:嵌套的filed;
+	// isChange 是否是Change事件触发.
 	function setShowHide(itemValue, showSection, innerItem, isChange) {
 
 		$(showSection).each(function(i, item) {
-			if (itemValue == item.ifValue || itemValue.indexOf(item.ifValue) >= 0) {
+			if (matchingItemValue(itemValue, item.ifValue)) {
 				getSection(item.field, item.finder).show();
 				setValidation(item.field, item.finder);
 			} else {
@@ -144,7 +232,7 @@
 					$(innerItems.showSection).each(function(i, item) {
 
 
-						if (changItemVale == item.ifValue || changItemVale.indexOf(item.ifValue) >= 0) {
+						if (matchingItemValue(changItemVale, item.ifValue)) {
 							if (ifFirst) {
 								getSection(item.field, item.finder).show();
 								setValidation(item.field, item.finder);
@@ -158,7 +246,7 @@
 
 					})
 
-					if (itemValue == innerItems.ifValue || itemValue.indexOf(innerItems.ifValue) >= 0) {
+					if (matchingItemValue(itemValue, innerItems.ifValue)) {
 						if (ifFirst) {
 							getSection(innerItems.item, innerItems.finder).show();
 							setValidation(innerItems.item, innerItems.finder);
@@ -271,19 +359,19 @@
 	function getSection(valueName, finder) {
 		switch (finder) {
 			case "parent":
-				return $("[name='DIV_" + valueName + "']").parent().parent().parent().parent().parent();
+				return $("[name='DIV_" + valueName + "']").parent().parent().parent().parent("panel");
 			case "prev":
-				if ($("[name='DIV_" + valueName + "']").prev().prev().length <= 0) {
-					return $("[name='DIV_" + valueName + "']").parent().prev();
+				if ($("[name='DIV_" + valueName + "']").prev().length <= 0) {
+					return $("[name='DIV_" + valueName + "']").parent("form-group").prev();
 				} else {
-					return $("[name='DIV_" + valueName + "']").prev().prev();
+					return $("[name='DIV_" + valueName + "']").prev();
 				}
 
 			case "next":
-				if ($("[name='DIV_" + valueName + "']").next().next().length <= 0) {
-					return $("[name='DIV_" + valueName + "']").parent().next();
+				if ($("[name='DIV_" + valueName + "']").next().length <= 0) {
+					return $("[name='DIV_" + valueName + "']").parent("form-group").next();
 				} else {
-					return $("[name='DIV_" + valueName + "']").next().next();
+					return $("[name='DIV_" + valueName + "']").next();
 				}
 
 			default:
@@ -297,7 +385,6 @@
 	}
 
 
-	// **
 	// radio
 	// checkbox
 	// text
@@ -308,7 +395,6 @@
 	// MultiSelect
 	// SingleSelect
 	// div
-	// **
 	function getControlType(valueName) {
 		if (valueName == undefined) return undefined;
 		var controlType = "";
@@ -316,7 +402,7 @@
 			var item;
 			var nodeName;
 
-			if (typeof(valueName) == "string") {
+			if (typeof(valueName) === "string") {
 				item = $("[name='" + valueName + "']");
 				nodeName = document.getElementsByName(valueName)[0] ? document.getElementsByName(valueName)[0].tagName.toLowerCase() : "";
 
@@ -411,11 +497,11 @@
 						if (typeof(value) == "string") {
 							$(getElement(valueName)).find("[value='" + value + "']").attr("checked", "checked");
 						} else if (typeof(value) == "object") {
-							$(value).each(function(item, i) {
+							$(value).each(function(i, item) {
 								$(getElement(valueName)).find("[value='" + item + "']").attr("checked", "checked");
 							})
 						} else {
-							return;
+							return undefined;
 						}
 						return;
 
@@ -425,22 +511,30 @@
 						return $(getElement(valueName)).val(value);
 
 					case "PeoplePicker":
-						if (_array) {
-							if (typeof(value) == "string") {
-								_array[0].item.setValue("value");
+						if (_xPeoplePickerArray) {
+							if (typeof(value) === "string") {
+								_xPeoplePickerArray.forEach(function(arrayItem, arrayI) {
+									if (arrayItem.key == valueName) {
 
-							} else if (typeof(value) == "object") {
-								_array.forEach(fucntion(arrayItem, arrayI) {
+										arrayItem.item.setValue(value);
+
+									}
+								});
+
+							} else if (typeof(value) === "object") {
+								_xPeoplePickerArray.forEach(function(arrayItem, arrayI) {
 									if (arrayItem.key == valueName) {
 										value.forEach(function(item, i) {
 											arrayItem.item.setValue(item);
 										})
 									}
-								})
+								});
 
 							} else {
-								return;
+								return undefined;
 							}
+						} else {
+							return undefined;
 						}
 						return;
 					case "Richtext":
@@ -490,7 +584,7 @@
 						var values = ""
 						var items = $(getSection(valueName)).find(":checked");
 						if (items.length > 0) {
-							$(getSection(valueName)).find(":checked").each(function(item, i) {
+							$(getSection(valueName)).find(":checked").each(function(i, item) {
 								if (i == 0) {
 									values = $(item).val();
 								} else {
