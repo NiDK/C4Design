@@ -5,7 +5,7 @@
  *
  * Date: 2017-04-06
  *
- * Version: V2.0.170412
+ * Version: V2.0.170419
  */
 (function($) {
 	var AppDesign = {};
@@ -13,7 +13,12 @@
 
 	AppDesign.Field = function(sourceField) {
 
-		var FieldItem = $(getElement(sourceField));
+		var FieldItem = $(getSection(sourceField));
+
+		FieldItem.group = function() {
+			
+		};
+
 		FieldItem.value = function(targetValue) {
 			if (targetValue) {
 				return setValue(sourceField, targetValue);
@@ -76,6 +81,10 @@
 			$(getSection(sourceField)).hide();
 		}
 
+		FieldItem.disabled = function(switchValue) {
+			setDisabled(sourceField, switchValue);
+		}
+
 		// targetField 要显示或隐藏的file集合,["fileName1","fileName2"];
 		FieldItem.changeToShowHide = function(sourceFieldValue, targetField) {
 
@@ -112,6 +121,12 @@
 		sectionItem.hide = function() {
 			$(sectionItem).hide();
 		}
+
+		sectionItem.disabled = function(switchValue) {
+			$(sectionItem).find("[name]").each(function(i, item) {
+				setDisabled($(item).attr("name"), switchValue);
+			})
+		}
 		return sectionItem;
 	};
 
@@ -127,26 +142,142 @@
 		return htmlItem;
 	};
 
-	AppDesign.Document = function() {
-		var documentItem = document;
+	AppDesign.Document = {
+		status: getState(),
 
-		documentItem.status = getState();
+		pageMode: PageMode,
 
-		documentItem.SetDefaultState= function(targetState) {
+		SetDefaultState: function(targetState) {
 			SetDefaultState(targetState);
-		}
+		},
 
-		documentItem.setShowHideMultipl = function(option) {
+		setShowHideMultipl: function(option) {
 			setShowHideMultipl(option);
 		}
 
-		return documentItem;
 	};
 
 	// {Roles:"",StaffId:"",StaffName:""}
 	AppDesign.User = function(callback) {
 		GetUser(callBack());
 	};
+
+	AppDesign.ActionButton = function(buttonName) {
+		var button = getActionButton(buttonName);
+		button.show = function() {
+			$(button).show();
+		}
+
+		button.hide = function() {
+			$(button).hide();
+		}
+
+		button.disabled = function(switchValue) {
+			if (switchValue) {
+				$(button).attr("disabled", "disabled");
+			} else {
+				$(button).removeAttr("disabled");
+			}
+
+		}
+
+		button.add = function(callBack) {
+			$(button).click(callback);
+			if (!getActionButtonStyle()) {
+				$(button).appendTo(".en_header_btnGroup .dropdown-menu");
+			} {
+				$(button).appendTo(".en_header_btnGroup");
+			}
+
+		}
+
+		button.new = function(callBack) {
+			var newButton = $('<button type="button" class="newButton btn btn-primary">' + buttonName + '</button>');
+			$(newButton).click(callback);
+			return $(newButton);
+		}
+
+		return button;
+	};
+
+	// if style="string" return "button"/"dropdown";
+	// else if "button" return true ;
+	function getActionButtonStyle(style) {
+		var returnValue = "";
+
+		if ($(".en_header_btnGroup .dropdown-toggle").length > 0) {
+			returnValue = "dropdown";
+		}
+		esle {
+			returnValue = "button"
+		};
+		if (style && style == "string") {
+			return returnValue;
+		} else {
+			if (returnValue = "dropdown") {
+				return false;
+			} else if (returnValue = "button") {
+				return true;
+			}
+		}
+	}
+
+	function getActionButton(buttonName) {
+		buttonName = buttonName.trim();
+
+		// dropdown-toggle
+		if (!getActionButtonStyle()) {
+			switch (buttonName) {
+				case "Edit":
+					return $("#btnEdit");
+				case "Close":
+					return $("#btnclose");
+				case "Cancel":
+					return $("#btncancelLi");
+				default:
+					$(".en_header_btnGroup .dropdown-menu li").each(function(i, item) {
+						if ($(item).find("a").html().trim() === buttonName) {
+							return $(item);
+						}
+					})
+					return $('<li><a href="#" class="">' + buttonName + '</a></li>');
+			}
+		} else {
+			switch (buttonName) {
+				case "Edit":
+					return $("#btnEdit");
+				case "Close":
+					return $("#btnclose");
+				case "Cancel":
+					return $("#btncancel");
+				default:
+					$(".wfcustomBtn").each(function(i, item) {
+						if ($(item).html().trim() === buttonName) {
+							return $(item);
+						}
+					})
+					return $('<button type="button" class="newButton btn btn-primary">' + buttonName + '</button>');
+			}
+		}
+	}
+
+	function setDisabled(sourceField, switchValue) {
+		switch (getControlType(sourceField)) {
+			case PeoplePicker:
+				_xPeoplePickerArray.forEach(function(arrayItem, arrayI) {
+					if (arrayItem.key == valueName) {
+						arrayItem.item.setReadOnly(switchValue);
+					}
+				});
+				break;
+			default:
+				if (switchValue) {
+					getElement(sourceField).attr("disabled": "disabled");
+				} else {
+					getElement(sourceField).removeAttr("disabled");
+				}
+		}
+	}
 
 	// [{
 	//	item:"",
