@@ -1,5 +1,5 @@
 /*!
- * C4Design Library v2.0
+ * AppDesign Library v2.0
  * 
  * Author: dakun.ni@cn.pwc.com 
  *
@@ -8,136 +8,143 @@
  * Version: V2.0.170412
  */
 (function($) {
-	var C4Design = {};
-	$.fn.C4Design = C4Design;
+	var AppDesign = {};
+	$.fn.AppDesign = AppDesign;
 
-	C4Design.Filed = function(field) {
-		var filedItem = {};
-		filedItem.value = function(option) {
-			if (option) {
-				return setValue(field, option);
+	AppDesign.Field = function(sourceField) {
+
+		var FieldItem = $(getElement(sourceField));
+		FieldItem.value = function(targetValue) {
+			if (targetValue) {
+				return setValue(sourceField, targetValue);
 			} else {
-				return getValue(field);
+				return getValue(sourceField);
 			}
 		};
 
-		filedItem.validation = function(option) {
-			return setValidation(field, null, option);
+		FieldItem.validation = function(switchValue) {
+			return setValidation(sourceField, null, switchValue);
 		};
 
-		filedItem.empty = function() {
-			return setEmpty(field);
+		FieldItem.empty = function() {
+			return setEmpty(sourceField);
 		}
 
-		filedItem.type = function() {
-			return getControlType(field);
+		FieldItem.type = function() {
+			return getControlType(sourceField);
 		}
 
-		filedItem.attributes = function(attributesKey, attributesValue) {
+		FieldItem.attributes = function(attributesKey, attributesValue) {
 			if (attributesValue != undefined) {
-				$(getElement(field)).attr(attributesKey, attributesValue);
+				$(getElement(sourceField)).attr(attributesKey, attributesValue);
 			} else {
-				return $(getElement(field)).attr(attributesKey);
+				return $(getElement(sourceField)).attr(attributesKey);
 			}
 
 		}
 
-		filedItem.addClass = function(className) {
+		FieldItem.addClass = function(className) {
 			if (className != undefined && className != "") {
-				$(getElement(field)).addClass(className);
+				$(getElement(sourceField)).addClass(className);
 			}
 		}
 
-		filedItem.inputRegular = function(reg) {
+		FieldItem.inputRegular = function(reg) {
 			if (reg != undefined && reg != "") {
-				$(getElement(field)).attr("regular", reg);
+				$(getElement(sourceField)).attr("regular", reg);
 			}
 		}
 
-		filedItem.invalidMessage = function(msg) {
+		FieldItem.invalidMessage = function(msg) {
 			if (msg != undefined && msg != "") {
-				$(getElement(field)).attr("invalid-msg", msg);
+				$(getElement(sourceField)).attr("invalid-msg", msg);
 			}
 		}
 
-		filedItem.displayValueInTitle = function() {
-			var itemValue = getValue(field);
+		FieldItem.displayValueInTitle = function() {
+			var itemValue = getValue(sourceField);
 			if (itemValue != undefined && itemValue != "") {
 				$("title").html(itemValue + "_" + $("title").html());
 			}
 		}
 
-		filedItem.show = function() {
-			$(getSection(field)).show();
+		FieldItem.show = function() {
+			$(getSection(sourceField)).show();
 		}
 
-		filedItem.hide = function() {
-			$(getSection(field)).hide();
+		FieldItem.hide = function() {
+			$(getSection(sourceField)).hide();
 		}
 
-		// showHideItems 要显示或隐藏的file集合,["fileName1","fileName2"];
-		filedItem.changeToShowHide = function(ifValue, showHideItems) {
+		// targetField 要显示或隐藏的file集合,["fileName1","fileName2"];
+		FieldItem.changeToShowHide = function(sourceFieldValue, targetField) {
 
 			var showSections = [];
-			if (showHideItems != undefined) {
-				if (typeof(showHideItems) === "string") {
+			if (targetField != undefined) {
+				if (typeof(targetField) === "string") {
 
-					showSections.push(getShowSectionItem(ifValue, showHideItems, ""));
+					showSections.push(getShowSectionItem(sourceFieldValue, targetField, ""));
 				} else {
-					showHideItems.forEach(function(item, i) {
-						showSections.push(getShowSectionItem(ifValue, item, ""));
+					targetField.forEach(function(item, i) {
+						showSections.push(getShowSectionItem(sourceFieldValue, item, ""));
 					})
 				}
 
 			};
 
 			setShowHideMultipl([{
-				item: field,
+				item: sourceField,
 				showSection: showSections
 			}]);
 		}
 
-		return filedItem
+		return FieldItem;
+
 	};
 
-	C4Design.Section = function(field) {
-		var sectionItem = {};
+
+	AppDesign.Section = function(sourceField) {
+		var sectionItem = getSection(sourceField, "parent");
 		sectionItem.show = function() {
-			$(getSection(field)).show();
+			$(sectionItem).show();
 		}
 
 		sectionItem.hide = function() {
-			$(getSection(field)).hide();
+			$(sectionItem).hide();
 		}
 		return sectionItem;
 	};
 
-	C4Design.Html = function(field) {
-		var htmlItem = {};
+	AppDesign.Html = function(sourceField, finder) {
+		var htmlItem = $(getSection(sourceField, finder));
 		htmlItem.show = function() {
-			$(getSection(field)).show();
+			$(htmlItem).show();
 		}
 
 		htmlItem.hide = function() {
-			$(getSection(field)).hide();
+			$(htmlItem).hide();
 		}
 		return htmlItem;
 	};
 
-	C4Design.Document = function() {
-		var document = {};
+	AppDesign.Document = function() {
+		var documentItem = document;
 
-		document.status = getState();
+		documentItem.status = getState();
 
-		document.setShowHideMultipl = function(option) {
+		documentItem.SetDefaultState= function(targetState) {
+			SetDefaultState(targetState);
+		}
+
+		documentItem.setShowHideMultipl = function(option) {
 			setShowHideMultipl(option);
 		}
 
-		return document;
+		return documentItem;
 	};
 
 	// {Roles:"",StaffId:"",StaffName:""}
-	C4Design.User = function(callback) {
+	AppDesign.User = function(callback) {
 		GetUser(callBack());
 	};
 
@@ -193,9 +200,9 @@
 		}
 	}
 
-	// itemValue:目标Filed 选中的值;
-	// showSection:显示或隐藏的filed;
-	// innerItem:嵌套的filed;
+	// itemValue:目标Field 选中的值;
+	// showSection:显示或隐藏的Field;
+	// innerItem:嵌套的Field;
 	// isChange 是否是Change事件触发.
 	function setShowHide(itemValue, showSection, innerItem, isChange) {
 
@@ -295,7 +302,7 @@
 			status = getValue("C4-WorkflowStateDisplayName");
 		}
 		if (PageMode == "add" && (status == undefined || status == "")) {
-			return "new";
+			return "Draft";
 		} else {
 			return status;
 		}
@@ -305,11 +312,11 @@
 		if (PageMode == "edit" || PageMode == "add") {
 			if (finder == undefined || finder == "") {
 
-				setEmptyFiled(valueName);
+				setEmptyField(valueName);
 			} else {
 				$(getSection(valueName, finder)).find("[name]").each(function(i, item) {
 
-					setEmptyFiled($(item).attr("name"));
+					setEmptyField($(item).attr("name"));
 				})
 			}
 		} else {
@@ -317,7 +324,7 @@
 		}
 	}
 
-	function setEmptyFiled(valueName) {
+	function setEmptyField(valueName) {
 		switch (getControlType(valueName)) {
 			case "radio":
 			case "checkbox":
@@ -361,7 +368,7 @@
 	function getSection(valueName, finder) {
 		switch (finder) {
 			case "parent":
-				return $("[name='DIV_" + valueName + "']").parent().parent().parent().parent("panel");
+				return $("[name='DIV_" + valueName + "']").parent().parent().parent().parent(".panel");
 			case "prev":
 				if ($("[name='DIV_" + valueName + "']").prev().length <= 0) {
 					return $("[name='DIV_" + valueName + "']").parent("form-group").prev();
@@ -488,7 +495,7 @@
 
 			case "edit":
 			case "add":
-				setEmptyFiled(valueName);
+				setEmptyField(valueName);
 
 				switch (getControlType(valueName)) {
 
@@ -634,5 +641,14 @@
 		var Dight = Math.round(Dight * Math.pow(10, How)) / Math.pow(10, How);
 		return Dight;
 	}
+
+	function SetDefaultState(targetState) {
+		if (PageMode == "add" && $("#C4-WorkflowStateDisplayName").length > 0) {
+			if ($("#C4-WorkflowStateDisplayName").html() == "") {
+				$("#C4-WorkflowStateDisplayName").html(targetState);
+				$("#C4-WorkflowStateDisplayName").parent().append('<input type="hidden" name="C4-WorkflowStateDisplayName" value="' + targetState + '"></input>');
+			}
+		}
+	}("Draft");
 })(jQuery);
-var C4Design = $(this).C4Design;
+var AppDesign = $(this).AppDesign;
