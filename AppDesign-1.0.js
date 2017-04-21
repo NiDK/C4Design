@@ -15,8 +15,17 @@
 
 		var FieldItem = $(getSection(sourceField));
 
-		FieldItem.group = function() {
-			
+		FieldItem.getValue = function() {
+			return getValue(sourceField);
+
+		};
+
+		FieldItem.setValue = function(targetValue) {
+			if (targetValue) {
+				return setValue(sourceField, targetValue);
+			} else {
+				return setEmpty(sourceField);
+			}
 		};
 
 		FieldItem.value = function(targetValue) {
@@ -39,7 +48,7 @@
 			return getControlType(sourceField);
 		}
 
-		FieldItem.attributes = function(attributesKey, attributesValue) {
+		FieldItem.attribute = function(attributesKey, attributesValue) {
 			if (attributesValue != undefined) {
 				$(getElement(sourceField)).attr(attributesKey, attributesValue);
 			} else {
@@ -81,8 +90,12 @@
 			$(getSection(sourceField)).hide();
 		}
 
-		FieldItem.disabled = function(switchValue) {
-			setDisabled(sourceField, switchValue);
+		FieldItem.enabled = function() {
+			setDisabled(sourceField, true);
+		}
+
+		FieldItem.disabled = function() {
+			setDisabled(sourceField, false);
 		}
 
 		// targetField 要显示或隐藏的file集合,["fileName1","fileName2"];
@@ -122,9 +135,15 @@
 			$(sectionItem).hide();
 		}
 
-		sectionItem.disabled = function(switchValue) {
+		sectionItem.enabled = function() {
 			$(sectionItem).find("[name]").each(function(i, item) {
-				setDisabled($(item).attr("name"), switchValue);
+				setDisabled($(item).attr("name"), true);
+			})
+		}
+
+		sectionItem.disabled = function() {
+			$(sectionItem).find("[name]").each(function(i, item) {
+				setDisabled($(item).attr("name"), false);
 			})
 		}
 		return sectionItem;
@@ -172,28 +191,39 @@
 			$(button).hide();
 		}
 
-		button.disabled = function(switchValue) {
-			if (switchValue) {
-				$(button).attr("disabled", "disabled");
+		button.enabled = function() {
+			if (!getActionButtonStyle()) {
+				setLiDisabled($(button), true);
 			} else {
 				$(button).removeAttr("disabled");
 			}
+		}
 
+		button.disabled = function() {
+			if (!getActionButtonStyle()) {
+				setLiDisabled($(button), false);
+
+			} else {
+				$(button).attr("disabled", "disabled");
+			}
 		}
 
 		button.add = function(callBack) {
-			$(button).click(callback);
+			$(button).click(callBack());
+
 			if (!getActionButtonStyle()) {
 				$(button).appendTo(".en_header_btnGroup .dropdown-menu");
-			} {
-				$(button).appendTo(".en_header_btnGroup");
+
+			} else {
+				$(button).appendTo(".en_header_btnGroup .DivBtn");
+
 			}
 
 		}
 
 		button.new = function(callBack) {
 			var newButton = $('<button type="button" class="newButton btn btn-primary">' + buttonName + '</button>');
-			$(newButton).click(callback);
+			$(newButton).click(callBack());
 			return $(newButton);
 		}
 
@@ -207,16 +237,15 @@
 
 		if ($(".en_header_btnGroup .dropdown-toggle").length > 0) {
 			returnValue = "dropdown";
-		}
-		esle {
-			returnValue = "button"
+		} else {
+			returnValue = "button";
 		};
 		if (style && style == "string") {
 			return returnValue;
 		} else {
-			if (returnValue = "dropdown") {
+			if (returnValue == "dropdown") {
 				return false;
-			} else if (returnValue = "button") {
+			} else if (returnValue == "button") {
 				return true;
 			}
 		}
@@ -230,17 +259,22 @@
 			switch (buttonName) {
 				case "Edit":
 					return $("#btnEdit");
+					break;
 				case "Close":
 					return $("#btnclose");
+					break;
 				case "Cancel":
 					return $("#btncancelLi");
+					break;
 				default:
+					var buttonItem = $('<li><a href="#" class="">' + buttonName + '</a></li>');
 					$(".en_header_btnGroup .dropdown-menu li").each(function(i, item) {
-						if ($(item).find("a").html().trim() === buttonName) {
-							return $(item);
+						if ($(item).find("a").length > 0 && $(item).find("a").html().trim() === buttonName) {
+							buttonItem = $(item);
+
 						}
 					})
-					return $('<li><a href="#" class="">' + buttonName + '</a></li>');
+					return buttonItem;
 			}
 		} else {
 			switch (buttonName) {
@@ -251,12 +285,14 @@
 				case "Cancel":
 					return $("#btncancel");
 				default:
-					$(".wfcustomBtn").each(function(i, item) {
+					var buttonItem = $('<button type="button" class="newButton btn btn-primary">' + buttonName + '</button>');
+					$(".en_header_btnGroup .DivBtn button").each(function(i, item) {
 						if ($(item).html().trim() === buttonName) {
-							return $(item);
+							buttonItem = $(item);
+
 						}
 					})
-					return $('<button type="button" class="newButton btn btn-primary">' + buttonName + '</button>');
+					return buttonItem;
 			}
 		}
 	}
@@ -272,11 +308,21 @@
 				break;
 			default:
 				if (switchValue) {
-					getElement(sourceField).attr("disabled": "disabled");
+					$(getElement(sourceField)).attr("disabled", "disabled");
 				} else {
-					getElement(sourceField).removeAttr("disabled");
+					$(getElement(sourceField)).removeAttr("disabled");
 				}
 		}
+	}
+
+	function setLiDisabled(sourceItem, switchValue) {
+		// 点击事件没有处理
+		if (switchValue) {
+			$(sourceItem).find("a").attr("style", "color:rgba(180, 183, 186, 1)").removeAttr("href");
+		} else {
+			$(sourceItem).find("a").attr("style", "color:#333").attr("href", "#");
+		}
+
 	}
 
 	// [{
